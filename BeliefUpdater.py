@@ -1,22 +1,35 @@
-"""Bayes-ba(ye)sed personal belief updater"""
+"""Bayes-ba(ye)sed personal belief organizer"""
+
+from utilities import *
 
 
 class Evidence:
-    def __init__(self, belief: Belief, name=""):
+    def __init__(self, belief, name, likelyhoods=None):
         self.belief = belief
-        self.likelyhoods = [0.0 for _ in range(len(belief.hypotheses))]
+        self.likelyhoods = [0.0 for _ in range(len(belief.hypotheses))
+                            ] if not likelyhoods else likelyhoods
         self.probability = 0.0
         self.name = name
+        self.counted = False
 
-    def update(self, likelyhoods=None):
-        if sum(likelyhoods) > 0.0:
-            v = input("Warning! Are you sure you want to reset the likelyhoods of {}?"
-                      .format(self.name))
-            if v[0].lower() not in ("y", "i", "1"):
-                return
-        if not likelyhoods:
-            likelyhoods = self.session()
-        self.likelyhoods = likelyhoods
+    def __str__(self):
+        chain = """******************************
+        Evidence {}
+        with marginal likelyhood {}.\n""".format(self.name + " ", self.probability)
+        for h, lkh in zip(self.belief.hypotheses, self.likelyhoods):
+            chain += "Probability given {} is {}.\n".format(h.name, lkh)
+        chain += "******************************\n"
+
+        return chain
+
+    def set_likelyhoods(self, likelyhoods=None):
+        assert 0.0 in self.likelyhoods, "Likelyhoods already set!"
+        for i, h in enumerate(self.belief.hypotheses):
+            if self.likelyhoods[i] != 0.0:
+                continue
+            p = getprobability("What is the likelyhood of {}\ngiven {} ? > "
+                           .format(self.name, h.name))
+            self.likelyhoods[i] = p
 
     def session(self):
         likelyhoods = []
@@ -37,15 +50,11 @@ class Evidence:
 
         return likelyhoods
 
-    def __str__(self):
-        chain = """******************************
-        Evidence {}
-        with marginal likelyhood {}.
-        ******************************""".format(self.name + " ", self.probability)
-        return chain
+    def describe(self):
+        print(self)
 
 
-class Hypotheses:
+class Hypothesis:
     def __init__(self, prior=0.5, name=""):
         self.name = name
         self.prior = prior
@@ -60,9 +69,25 @@ class Hypotheses:
 
 
 class Belief:
-    def __init__(self):
-        self.hypotheses = []
-        self.evidences = []
+    def __init__(self, hypotheses=None, evidences=None):
+        self.hypotheses = hypotheses if hypotheses else []
+        self.evidences = evidences if evidences else []
+
+    def add_hypothesis(self, hypothesis=None):
+        if hypothesis is None:
+            hypothesis = self._h_session()
+
+        self.hypotheses.append(hypothesis)
+
+    def add_evidence(self, name, likelyhoods=None):
+        self.evidences.append(Evidence(self, name, likelyhoods))
+
+    def _h_session(self):
+        i = len(self.hypotheses) + 1
+        name = input("Please supply a name for the {}. hypotheses!\n> ".format(i))
+        prior = getprobability("Please give a prior probability for {}!\n> ".format(name))
+        hypothesis = Hypothesis(prior, name)
+        return hypothesis
 
     def update(self):
         for e in self.evidences:
@@ -81,10 +106,10 @@ class Belief:
         for lkh, h in zip(ps, self.hypotheses):
             h.likelyhood = ((lkh - mn) / (mx - mn))
 
-    def add_evidence(self, name):
-        self.evidences.append(Evidence(self, name))
+    def remove_evidence(self, name):
+        self.evidences = [e for e in self.evidences if e.name != name]
         self.update()
 
-    def remove_evidence(self, evidence: Evidence):
-        self.evidences.remove(evidence)
-        self.update()
+
+if __name__ == '__main__':
+    system = Belief()
