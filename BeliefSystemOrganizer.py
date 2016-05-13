@@ -7,6 +7,7 @@ class App(Tk):
         self.belief = StringVar()
         self.geometry("800x600")
         self.hbuttons = []
+        self.ebuttons = []
         self.build_gui()
 
     def build_gui(self):
@@ -15,20 +16,29 @@ class App(Tk):
         panels.pack()
 
         leftpanel = Frame(self, bd=3, relief=RAISED)
-        leftpanel.pack(side=LEFT, fill=BOTH)
+        leftpanel.pack(side=LEFT)
 
         rightpanel = Frame(self, bd=3, relief=RAISED)
-        rightpanel.pack(side=LEFT, fill=BOTH)
+        rightpanel.pack(side=LEFT)
 
-        self.hbuttons = [Label(leftpanel, text=h, bd=2, relief=RIDGE, anchor=W) for h in hypotheses]
+        w = 30
+
+        self.hbuttons = [Label(leftpanel, text=h, anchor=W,
+                               bd=2, relief=RIDGE, width=w)
+                         for h in hypotheses]
+        self.ebuttons = [Label(rightpanel, text=e, anchor=W,
+                               bd=2, relief=RIDGE, width=w)
+                         for e in evidences]
         for hb in self.hbuttons:
-            hb.pack(fill=X)
+            hb.pack()
+        for eb in self.ebuttons:
+            eb.pack()
 
 
 
 
 
 hypotheses = ("B effs SB", "B does not eff SB")
-
+evidences = ("SB is Christian", "SB wears provocative clothes", "It is rumoured")
 
 App().mainloop()

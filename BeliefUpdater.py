@@ -69,7 +69,8 @@ class Hypothesis:
 
 
 class Belief:
-    def __init__(self, hypotheses=None, evidences=None):
+    def __init__(self, name, hypotheses=None, evidences=None):
+        self.name = name
         self.hypotheses = hypotheses if hypotheses else []
         self.evidences = evidences if evidences else []
 
