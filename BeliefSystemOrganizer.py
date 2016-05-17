@@ -35,9 +35,6 @@ class App(Tk):
             eb.pack()
 
 
-
-
-
 hypotheses = ("B effs SB", "B does not eff SB")
 evidences = ("SB is Christian", "SB wears provocative clothes", "It is rumoured")
 
