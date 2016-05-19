@@ -3,19 +3,19 @@ from tkinter import *
 
 class App(Tk):
     def __init__(self):
-        Tk.__init__(self, screenName="Bayesian Belief System Organizer")
+        Tk.__init__(self)
         self.geometry("800x600")
         self.title("Bayesian Belief System Organizer")
 
         top_frame = Frame(self)
-        top_frame.pack(fill=X)
+        top_frame.pack()
 
-        forms = ("Simple form", "Complete Hypotheses Space")
-        self.mode_buttons = {tx: Label(top_frame, text=tx, width=53, bd=10, relief=RAISED)
+        forms = ("Simple form", "Complete Hypothesis Space")
+        self.mode_buttons = {tx: Label(top_frame, text=tx, width=34, bd=10, relief=RAISED,
+                                       font=("Times New Roman", 16))
                              for tx in forms}
 
         for col, tx in enumerate(forms):
-            print("Col, tx =", str((col, tx)))
             b = self.mode_buttons[tx]
             b.grid(row=0, column=col)
 
@@ -26,6 +26,8 @@ class App(Tk):
 
         self.mainframe = None
         self.mainframe_obj = None
+
+        Frame(self, height=15, relief=RIDGE, bg="black", bd=10).pack(fill=X, pady=10)
 
         self._build_mainframe(None, "Simple form")
 
@@ -52,92 +54,75 @@ class App(Tk):
         create_new()
         self.mainframe_obj.pack(fill=BOTH)
 
-    class _HypTL(Toplevel):
-        def __init__(self, master, hyp):
-            Toplevel.__init__(self, master)
-            self.title("Hypotheses settings")
-
-            Label(self, text="Rename {} to:".format(hyp)).pack()
-            self.e = Entry(self)
-            self.e.insert(0, hyp)
-            self.e.pack(fill=X)
-            self.e.bind("<Return>", lambda x: self._callback(event=x, hyp=hyp))
-            Button(self, text="OK", command=lambda: self._callback(event=None, hyp=hyp)
-                   ).pack(fill=X)
-
-        def _callback(self, event, hyp):
-            del event  # so IDE stops whining
-            self.master.hbuttons[hyp].configure(text=self.e.get(), relief=RAISED)
-            self.destroy()
-
-    class _EviTL(Toplevel):
-        def __init__(self, master, evi):
-            Toplevel.__init__(self, master)
-            self.title("Evidence settings".format(evi))
-
-            Button(self, text="OK", command=lambda: self._callback(evi)
-                   ).pack(fill=X)
-
-        def _callback(self, evi):
-            self.master.ebuttons[evi].configure(relief=RAISED)
-
 
 class SimpleFrame(Frame):
     def __init__(self, master, name, **kw):
         Frame.__init__(self, master, **kw)
+
         self.name = name
+        self.belief = Simple_Belief(self, BELIEF, HYPOTHESES)  # TODO: replace these constants
 
-        self.hypothesis = StringVar(value="")
+        def add_top_labels():
+            widgets = []
+            for chain in ("Hypothesis:", "Evidence:"):
+                var = self.belief.hypothesis if chain[0] == "H" else self.belief.evidence
+                widgets.append(Label(self, text=chain, font=("Times New Roman", "18"),
+                                     bd=5, relief=RAISED))
+                widgets.append(Entry(self, textvariable=var,
+                                     font=("Times New Roman", "16"), bg="white", fg="black",
+                                     bd=5, relief=RAISED))
+                widgets[-1].bind("<FocusOut>", self.belief.set_labels)
+                widgets[-1].bind("<Return>", self.belief.set_labels)
 
-        title = Label(self, text="Hypothesis:", font=("Times New Roman", "18"),
-                      bd=5, relief=RAISED)
-        title.bind("<Button-1>", self._gethyp)
-        title.pack(fill=X)
-        hyp = Label(self, textvariable=self.hypothesis, font=("Times New Roman", "16"),
-                    bg="white",
-                    bd=5, relief=RAISED)
-        hyp.bind("<Button-1>", self._gethyp)
-        hyp.pack(fill=X)
+            for wdgt in widgets:
+                wdgt.pack(fill=X)
 
-        BayesRule(self, padx=42).pack()
-        self._Members(self).pack()
+        def add_bayes_panel():
+            BayesRule(self, padx=42, pady=10).pack()
+            self._Members(self).pack()
 
-    def _gethyp(self, event=None):
-        del event  # so IDE stops whining
-        tl = self._GetHypTL(self)
-        tl.grab_set()
+        def add_control_buttons():
+            cbframe = Frame(self)
+            cbframe.pack()
+
+            w = 8
+
+            Button(cbframe, text="Update", width=w).pack(side=LEFT)
+            Button(cbframe, text="Clear", width=w).pack(side=LEFT)
+
+        add_top_labels()
+        add_bayes_panel()
+        add_control_buttons()
 
     class _Members(Frame):
         def __init__(self, master, **kw):
             Frame.__init__(self, master, **kw)
-            xpnames = ("P(A|B)", "P(A)", "P(B|A)", "P(B)")
-            xplanations = ("The Posterior Probability of the hypotheses, given the evidence",
-                           "The Prior Probability of the hypothesis",
-                           "The Likelyhood of the evidence given the hypotheses",
-                           "The Marginal Likelyhood of the evidence")
-            self.xpvals = {xpn: DoubleVar() for xpn in xpnames}
+            xpnames = ("P(A)", "P(B|A)", "P(B)", "P(A|B)")
+            xplanations = ("The Prior Probability of the hypothesis",
+                           "The Likelyhood of the evidence given the hypothesis",
+                           "The Marginal Likelyhood of the evidence",
+                           "The Posterior Probability of the hypothesis, given the evidence")
+            vars = self.master.belief.vars
 
             xpnw, xplw, varw = 8, max([len(xpl) for xpl in xplanations]) - 15, 14
+            insertw = 60
             bw = 3
             rl = RIDGE
             for rown, (xpn, xpl) in enumerate(zip(xpnames, xplanations)):
-                entrystate = NORMAL if rown else "readonly"
+                entrystate = NORMAL if rown != 3 else "readonly"
+                entryfg = "black" if rown == 3 else "white"
+
+                rown *= 2
+                insert = rown + 1
                 Label(self, text=xpn, width=xpnw, bd=bw, relief=rl, anchor=W, justify=LEFT
                       ).grid(row=rown, column=0)
-                Entry(self, textvariable=self.xpvals[xpn], width=varw, state=entrystate
+                Entry(self, textvariable=vars[xpn][0], width=varw, state=entrystate, foreground=entryfg
                       ).grid(row=rown, column=1, sticky="ew")
                 Label(self, text=xpl, width=xplw, bd=bw, relief=rl, anchor=W, justify=LEFT
                       ).grid(row=rown, column=2)
 
-    class _GetHypTL(Toplevel):
-        def __init__(self, master):
-            Toplevel.__init__(self, master)
-            self.title("Name Your Hypothesis")
-            Label(self, text="Please supply a name for the hypotheses!", width=40).pack()
-            e = Entry(self, textvariable=self.master.hypothesis)
-            e.bind("<Return>", lambda x: self.destroy())
-            e.pack(fill=X)
-            Button(self, text="OK", command=self.destroy).pack(fill=X)
+                Label(self, textvariable=vars[xpn][1], width=insertw, relief=rl, anchor=W, justify=LEFT
+                      ).grid(row=insert, column=0, columnspan=3, sticky="ew")
 
 
 class ComplexFrame(Frame):
@@ -195,7 +180,73 @@ class BayesRule(Frame):
         Label(rightside, text="P(B)", font=font).pack(fill=X)
 
 
+class Simple_Belief(Frame):
+    def __init__(self, master, name, hname):
+        Frame.__init__(self, master)
+
+        self.name = StringVar(value=name)
+        self.hypothesis = StringVar(value=hname)
+        self.evidence = StringVar(value="")
+
+        self.prior = DoubleVar()
+        self.priorl = StringVar()
+        self.lkh = DoubleVar()
+        self.lkhl = StringVar()
+        self.mlkh = DoubleVar()
+        self.mlkhl = StringVar()
+        self.posterior = DoubleVar()
+        self.posteriorl = StringVar()
+
+        self.vars = {
+            "P(A|B)": (self.posterior, self.posteriorl),
+            "P(A)": (self.prior, self.priorl),
+            "P(B|A)": (self.lkh, self.lkhl),
+            "P(B)": (self.mlkh, self.mlkhl),
+        }
+
+        self.set_labels(None)
+
+    def calc_posterior(self):
+        self.posterior.set(
+            (self.prior.get() * self.lkh.get()) / self.mlkh.get()
+        )
+
+    def step(self):
+        self.prior.set(self.posterior.get())
+        self.lkh.set(0.0)
+        self.mlkh.set(0.0)
+        self.posterior.set(0.0)
+
+    def clear(self):
+        self.prior.set(0.0)
+        self.priorl.set("")
+        self.lkh.set(0.0)
+        self.lkhl.set("")
+        self.mlkh.set(0.0)
+        self.mlkhl.set("")
+        self.posterior.set(0.0)
+        self.posteriorl.set("")
+
+    def set_labels(self, event):
+        hname = self.hypothesis.get()
+        ename = self.evidence.get()
+        prior = "What is the probability of [{}]?".format(hname)
+        lkh = "What is the likelyhood of [{}] given [{}]?".format(ename, hname)
+        mlkh = "What is the likelyhood of [{}]?".format(ename)
+        posterior = "The probability of [{}] given [{}]?".format(hname, ename)
+
+        self.priorl.set(prior)
+        self.lkhl.set(lkh)
+        self.mlkhl.set(mlkh)
+        self.posteriorl.set(posterior)
+
+
+BELIEF = "Subject of protector angels"
+HYPOTHESES = "Someone is looking after me"
+EVIDENCE = "I dodged a bullet today"
+
 hypotheses = tuple()
 evidences = tuple()
 
-App().mainloop()
+app = App()
+app.mainloop()
