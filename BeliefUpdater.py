@@ -8,16 +8,15 @@ class Evidence:
         self.belief = belief
         self.likelyhoods = [0.0 for _ in range(len(belief.hypotheses))
                             ] if not likelyhoods else likelyhoods
-        self.probability = 0.0
+        self.probability = 0.0  # AKA marginal likelyhoof
         self.name = name
         self.counted = False
 
     def __str__(self):
-        chain = """******************************
-        Evidence {}
-        with marginal likelyhood {}.\n""".format(self.name + " ", self.probability)
+        chain = "******************************\nEvidence [{}]\n"
+        chain += "with marginal likelyhood {}.\n".format(self.name + " ", self.probability)
         for h, lkh in zip(self.belief.hypotheses, self.likelyhoods):
-            chain += "Probability given {} is {}.\n".format(h.name, lkh)
+            chain += "Probability given [{}]:\t{}.\n".format(h.name, lkh)
         chain += "******************************\n"
 
         return chain
@@ -33,20 +32,10 @@ class Evidence:
 
     def session(self):
         likelyhoods = []
-        no_hyps = len(self.belief.hypotheses)
-        for _ in range(no_hyps):
-            likelyhood = -1.0
-            while likelyhood < 0.0:
-                chain = "What is the likelyhood of\n[{}]\ngiven [{}]?\n> "
-                try:
-                    likelyhood = float(input(chain))
-                except ValueError:
-                    likelyhood = -1.0
-                if likelyhood > 1.0:
-                    likelyhood = -1.0
-            likelyhoods.append(likelyhood)
-
-        assert len(likelyhoods) == no_hyps
+        for h in self.belief.hypotheses:
+            prompt = "What is the likelyhood of {}\ngiven {}?\n> ".format(self.name, h.name)
+            lkh = getprobability(prompt)
+            likelyhoods.append(lkh)
 
         return likelyhoods
 
@@ -61,42 +50,76 @@ class Hypothesis:
         self.probability = prior
 
     def __str__(self):
-        chain = """------------------------------
-        Hypotheses: {}
-        Probability: {}
-        ------------------------------""".format(self.name + " ", self.probability)
+        chain = "------------------------------\n"
+        chain += "Hypotheses: [{}]\nProbability: {}\n".format(self.name + " ", self.probability)
+        chain += "------------------------------"
         return chain
 
 
 class Belief:
-    def __init__(self, name, hypotheses=None, evidences=None):
+    def __init__(self, name, hypotheses=None):
         self.name = name
         self.hypotheses = hypotheses if hypotheses else []
-        self.evidences = evidences if evidences else []
+        self.evidences = []
+        self.describe()
+        if not hypotheses:
+            self.add_hypotheses()
 
-    def add_hypothesis(self, hypothesis=None):
-        if hypothesis is None:
-            hypothesis = self._h_session()
+    def add_hypotheses(self, hypotheses=None):
+        if hypotheses is None:
+            hypotheses = self._h_session()
+            # print("DEBUG: received {} hypotheses!".format(len(hypotheses)))
+        self.hypotheses = hypotheses
 
-        self.hypotheses.append(hypothesis)
-
-    def add_evidence(self, name, likelyhoods=None):
+    def add_evidence(self):
+        name, likelyhoods = self._e_session()
         self.evidences.append(Evidence(self, name, likelyhoods))
+        self.update()
+
+    def _e_session(self):
+        i = len(self.evidences) + 1
+        name = input("Please supply a name for the {}. evidence!\n> ".format(i))
+        likelyhoods = []
+        for hyp in self.hypotheses:
+            likelyhoods.append(
+                getprobability("What is the likelyhood of [{}]\ngiven [{}]?\n> "
+                               .format(name, hyp.name)))
+
+        return name, likelyhoods
 
     def _h_session(self):
-        i = len(self.hypotheses) + 1
-        name = input("Please supply a name for the {}. hypotheses!\n> ".format(i))
-        prior = getprobability("Please give a prior probability for {}!\n> ".format(name))
-        hypothesis = Hypothesis(prior, name)
-        return hypothesis
+        hypotheses = []
+        while 1:
+            cumulative_probability = 0.0
+            i = len(self.hypotheses) + 1
+            name = input("Please supply a name for the {}. hypotheses!\n> ".format(i))
+            if name.lower() in ("stop", "exit", "off", "0", "") \
+                    or cumulative_probability == 1.0:
+                break
+            prior = getprobability("Please give a prior probability for [{}]!\n> ".format(name))
+            cumulative_probability += prior
+            hypotheses.append(Hypothesis(prior, name))
+            print()
+        return hypotheses
 
     def update(self):
+        n_hyps = len(self.hypotheses)
+        priors = [h.probability for h in self.hypotheses]
         for e in self.evidences:
-            e.update()
-
-        for h in self.hypotheses:
-            for e in self.evidences:
-                h.probability *= e.likelyhood / e.marg_likelíhood
+            if e.counted:
+                print("*** [{}] already counted. Skipping! ***".format(e.name))
+                continue
+            if len(e.likelyhoods) == n_hyps:
+                e.probability = sum([pri * lkh for pri, lkh in zip(priors, e.likelyhoods)])
+            else:
+                raise RuntimeError("Evidences are not up-to-date!")
+            e.counted = True
+            for i, h in enumerate(self.hypotheses):
+                h.probability = (priors[i] * e.likelyhoods[i]) / e.probability
+            print("Hyptheses have been updated!")
+            for h in self.hypotheses:
+                print(h)
+                print()
 
     def squash(self):
         ps = [h.probability for h in self.hypotheses]
@@ -111,6 +134,18 @@ class Belief:
         self.evidences = [e for e in self.evidences if e.name != name]
         self.update()
 
+    def describe(self):
+        sep = "-" * 20
+        print("Belief System Organizer")
+        print(sep)
+        print("Under examination:", self.name)
+        print("Current Hypotheses:" + (" 0" if not self.hypotheses else ""))
+        for h in self.hypotheses:
+            print("- [{}]\nwith probability:\t{}".format(h.name, h.probability))
+        print("Number of Evidences:", len(self.evidences))
+        print(sep)
 
-if __name__ == '__main__':
-    system = Belief()
+
+def initialize(name="Test"):
+    system = Belief(name)
+    return system

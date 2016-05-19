@@ -29,3 +29,20 @@ def getprobability(prompt: str) -> float:
     else:
         print("Invalid number for probability! Assuming 0.5...")
         return 0.5
+
+
+def bayes(prior: float, lkh: float, mlkh: float) -> float:
+    if not valid(prior, lkh, mlkh):
+        raise TypeError("Please supply valid probability values! [0.0, 1.0]")
+    return (prior * lkh) / mlkh
+
+
+def valid(*args) -> bool:
+    """Returns True if every supplied argument is of type <float> and
+    falls between 0.0 and 1.0 (it is a valid measure of probability)"""
+    ok = True
+    if not all([isinstance(x, float) for x in args]):
+        ok = False
+    if not all([0.0 < x < 1.0 for x in args]):
+        ok = False
+    return ok

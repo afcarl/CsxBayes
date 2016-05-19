@@ -19,7 +19,7 @@ class App(Tk):
             b = self.mode_buttons[tx]
             b.grid(row=0, column=col)
 
-        sfrm, cfrm = forms
+        # sfrm, cfrm = forms
 
         # self.mode_buttons[sfrm].bind("<Button-1>", lambda x: self._build_mainframe(x, sfrm))
         # self.mode_buttons[cfrm].bind("<Button-1>", lambda x: self._build_mainframe(x, cfrm))
@@ -30,6 +30,7 @@ class App(Tk):
         self._build_mainframe(None, "Simple form")
 
     def _build_mainframe(self, event, what):
+        del event  # so IDE stops whining
         if self.mainframe == what:
             return
 
@@ -65,6 +66,7 @@ class App(Tk):
                    ).pack(fill=X)
 
         def _callback(self, event, hyp):
+            del event  # so IDE stops whining
             self.master.hbuttons[hyp].configure(text=self.e.get(), relief=RAISED)
             self.destroy()
 
@@ -101,6 +103,7 @@ class SimpleFrame(Frame):
         self._Members(self).pack()
 
     def _gethyp(self, event=None):
+        del event  # so IDE stops whining
         tl = self._GetHypTL(self)
         tl.grab_set()
 
@@ -170,6 +173,7 @@ class ComplexFrame(Frame):
             Button(self, text="Add new...", font=14).pack(fill=X)
 
         def _callback(self, event, who):
+            del event  # so IDE stops whining
             for tx, bt in self.buttons.items():
                 bt.configure(relief=(RAISED if tx == who else SUNKEN))
             print("UNDEVELOPED...")
