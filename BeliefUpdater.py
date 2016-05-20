@@ -76,9 +76,10 @@ class Belief:
         self.evidences.append(Evidence(self, name, likelyhoods))
         self.update()
 
-    def _e_session(self):
+    def _e_session(self, name=None):
         i = len(self.evidences) + 1
-        name = input("Please supply a name for the {}. evidence!\n> ".format(i))
+        if not name:
+            name = input("Name of the {}. evidence:\n> ".format(i))
         likelyhoods = []
         for hyp in self.hypotheses:
             likelyhoods.append(

@@ -11,7 +11,7 @@ class App(Tk):
         top_frame.pack()
 
         forms = ("Simple form", "Complete Hypothesis Space")
-        self.mode_buttons = {tx: Label(top_frame, text=tx, width=34, bd=10, relief=RAISED,
+        self.mode_buttons = {tx: Label(top_frame, text=tx, width=31, bd=10, relief=RAISED,
                                        font=("Times New Roman", 16))
                              for tx in forms}
 
@@ -168,6 +168,9 @@ class BayesRule(Frame):
     def __init__(self, master, font=36, **kw):
         Frame.__init__(self, master, bd=3, relief=RAISED, **kw)
 
+        self.simple(font)
+
+    def simple(self, font):
         font = "Times New Roman", str(font)
 
         Label(self, text="P(A|B) =", font=font).pack(side=LEFT)
