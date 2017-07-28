@@ -2,6 +2,7 @@ from tkinter import *
 
 
 class App(Tk):
+
     def __init__(self):
         Tk.__init__(self)
         self.geometry("800x600")
@@ -56,6 +57,7 @@ class App(Tk):
 
 
 class SimpleFrame(Frame):
+
     def __init__(self, master, name, **kw):
         Frame.__init__(self, master, **kw)
 
@@ -126,6 +128,7 @@ class SimpleFrame(Frame):
 
 
 class ComplexFrame(Frame):
+
     def __init__(self, master, name, **kw):
         Frame.__init__(self, master, **kw)
         self.name = name
@@ -165,6 +168,7 @@ class ComplexFrame(Frame):
 
 
 class BayesRule(Frame):
+
     def __init__(self, master, font=36, **kw):
         Frame.__init__(self, master, bd=3, relief=RAISED, **kw)
 
@@ -184,6 +188,7 @@ class BayesRule(Frame):
 
 
 class Simple_Belief(Frame):
+
     def __init__(self, master, name, hname):
         Frame.__init__(self, master)
 

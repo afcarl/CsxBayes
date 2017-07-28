@@ -4,6 +4,7 @@ from utilities import *
 
 
 class Evidence:
+
     def __init__(self, belief, name, likelyhoods=None):
         self.belief = belief
         self.likelyhoods = [0.0 for _ in range(len(belief.hypotheses))
@@ -44,6 +45,7 @@ class Evidence:
 
 
 class Hypothesis:
+
     def __init__(self, prior=0.5, name=""):
         self.name = name
         self.prior = prior
@@ -57,6 +59,7 @@ class Hypothesis:
 
 
 class Belief:
+
     def __init__(self, name, hypotheses=None):
         self.name = name
         self.hypotheses = hypotheses if hypotheses else []
