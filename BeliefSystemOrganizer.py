@@ -97,12 +97,13 @@ class SimpleFrame(Frame):
         add_control_buttons()
 
     class _Members(Frame):
+
         def __init__(self, master, **kw):
             Frame.__init__(self, master, **kw)
             xpnames = ("P(A)", "P(B|A)", "P(B)", "P(A|B)")
             xplanations = ("The Prior Probability of the hypothesis",
-                           "The Likelyhood of the evidence given the hypothesis",
-                           "The Marginal Likelyhood of the evidence",
+                           "The Likelihood of the evidence given the hypothesis",
+                           "The Marginal Likelihood of the evidence",
                            "The Posterior Probability of the hypothesis, given the evidence")
             vars = self.master.belief.vars
 
@@ -142,6 +143,7 @@ class ComplexFrame(Frame):
         self._Panel_display(main_panel, "Evidences", cnf=panel_cnf).pack(side=LEFT, fill=Y)
 
     class _Panel_display(Frame):
+
         def __init__(self, master, what, cnf=None, **kw):
             assert what in ("Hypotheses", "Evidences")
             cnf = cnf if cnf else {}
@@ -239,8 +241,8 @@ class Simple_Belief(Frame):
         hname = self.hypothesis.get()
         ename = self.evidence.get()
         prior = "What is the probability of [{}]?".format(hname)
-        lkh = "What is the likelyhood of [{}] given [{}]?".format(ename, hname)
-        mlkh = "What is the likelyhood of [{}]?".format(ename)
+        lkh = "What is the likelihood of [{}] given [{}]?".format(ename, hname)
+        mlkh = "What is the likelihood of [{}]?".format(ename)
         posterior = "The probability of [{}] given [{}]?".format(hname, ename)
 
         self.priorl.set(prior)
